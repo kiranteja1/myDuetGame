@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:2px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame();">
+<script>
+
+var myGamePiece;
+var myObstacle  = [];
+var myScore;
+var gamePaused = false;
+var j=1;
+
+function startGame() {
+    myGamePiece = new component(10,"red",1,0,0,0,0);
+    myGamePiece2 = new component(10,"blue",-1,0,0,0,0);
+    myScore = new component(0,"black",0,10,30,"20px","consolas","text");
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 300;
+        this.canvas.height = 500;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('keydown',function(e){
+          myGameArea.key = e.keyCode;
+        })
+        window.addEventListener('keyup',function(e){
+          myGameArea.key = false;
+        })
+    },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx = this.context;
+        ctx.beginPath();
+        ctx.arc(150,420,60,0,2*Math.PI);
+        ctx.stroke();
+    },
+    stop : function() {
+      clearInterval(this.interval);
+    },
+    pauseGame : function() {
+      if(!gamePaused) {
+        this.interval = clearInterval(this.interval);
+        gamePaused = true;
+      } else if (gamePaused) {
+        this.interval = setInterval(updateGameArea, 20);
+        gamePaused = false;
+      }
+    }
+}
+
+function component(radius,color,o,x,y,width,height,type) {
+  this.type = type;
+    this.radius = radius;
+    this.speedI = 0;
+    this.o = o;
+    this.r = 1;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    var ang = 0;
+    this.update = function() {
+        ctx = myGameArea.context;
+        if(this.type == "text"){
+          ctx.font = this.width + " " + this.height;
+          ctx.fillStyle = color;
+          ctx.fillText(this.text,this.x,this.y);
+        }else {
+        ctx.beginPath();
+        ctx.arc(150+this.o*60*Math.cos(ang),420-this.o*60*Math.sin(ang),10,0,2*Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+    }
+    this.update1 = function() {
+      ctx =myGameArea.context;
+      ctx.fillStyle = color;
+      ctx.fillRect(this.x,this.y,this.width,this.height);
+    }
+    this.newPos = function() {
+      ang += this.r*this.speedI*(Math.PI/180);
+    }
+    this.crashWith = function(other) {
+      var i;
+      var ol = other.x;
+      var or = other.x+other.width;
+      var ot = other.y;
+      var ob = other.y+other.height;
+      var crash = false;
+      for(i=0;i<=360;i++)
+      {
+        if(((150+this.o*60*Math.cos(ang)+this.radius*Math.cos(i*(Math.PI/180)))>ol)&&((150+this.o*60*Math.cos(ang)+this.radius*Math.cos(i*(Math.PI/180)))<or)&&((420-this.o*60*Math.sin(ang)-this.radius*Math.sin(i*(Math.PI/180)))>ot)&&((420-this.o*60*Math.sin(ang)-this.radius*Math.sin(i*(Math.PI/180)))<ob)){
+        crash = true;
+        }
+      }
+      return crash;
+    }
+}
+function clockW() {
+  myGamePiece.r = -1;
+  myGamePiece2.r = -1;
+  myGamePiece.speedI +=7;
+  myGamePiece2.speedI +=7;
+}
+function anticlockW() {
+  myGamePiece.r = 1;
+  myGamePiece2.r = 1;
+  myGamePiece.speedI +=7;
+  myGamePiece2.speedI +=7;
+}
+function everyint(n) {
+  if((myGameArea.frameNo/n)%1 == 0){return true;}
+  return false;
+}
+
+function updateGameArea() {
+    var i,minX,maxX,minW,maxW,x,w;
+    for(i=0; i<myObstacle.length;i++){
+    if((myGamePiece.crashWith(myObstacle[i]))||(myGamePiece2.crashWith(myObstacle[i]))){
+      myGameArea.stop();
+      return;
+    }
+  }
+    myGameArea.clear();
+    stop();
+    if(myGameArea.key && myGameArea.key == 37) {clockW();}
+    if(myGameArea.key && myGameArea.key == 39) {anticlockW();}
+    myGameArea.frameNo +=1;
+    if(myGameArea.frameNo == 1 || everyint(200)) {
+      minX = 60;
+      maxX = 200;
+      minW = 60;
+      maxW = 100;
+      x = Math.floor(Math.random()*(maxX-minX+1)+minX);
+      w = Math.floor(Math.random()*(maxW-minW+1)+minW);
+      myObstacle.push(new component(0,"black",0,x,0,w,20));
+    }
+    for(i=0;i<myObstacle.length;i++){
+    myObstacle[i].y +=j;
+    myObstacle[i].update1();
+  }
+   myScore.text ="SCORE: " + myGameArea.frameNo;
+   myScore.update();
+    myGamePiece.newPos();
+    myGamePiece.update();
+    myGamePiece2.newPos();
+    myGamePiece2.update();
+    j +=0.001;
+}
+function stop() {
+  myGamePiece.speedI = 0;
+  myGamePiece2.speedI = 0;
+}
+function pause() {
+  myGameArea.pauseGame();
+}
+</script>
+<button onclick="pause();">||</button>
+<a href="duet game.html"><button>R</button></a>
+</body>
+</html>
