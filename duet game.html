@@ -137,8 +137,8 @@ function updateGameArea() {
   }
     myGameArea.clear();
     stop();
-    if(myGameArea.key && myGameArea.key == 37) {clockW();}
-    if(myGameArea.key && myGameArea.key == 39) {anticlockW();}
+    if(myGameArea.key && myGameArea.key == 37) {anticlockW();}
+    if(myGameArea.key && myGameArea.key == 39) {clockW();}
     myGameArea.frameNo +=1;
     if(myGameArea.frameNo == 1 || everyint(200)) {
       minX = 60;
